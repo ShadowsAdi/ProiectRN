@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON Server Data</title>
+<style>
+  /* Style the slider track */
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 200px; /* Adjust the width as needed */
+    height: 10px;
+    background: linear-gradient(to right, blue 0%, blue calc((var(--value) - 2) * 100% / (3 - 2)), #ccc calc((var(--value) - 2) * 100% / (3 - 2)), #ccc 100%);
+    border-radius: 5px;
+    outline: none;
+    margin: 5px 0;
+  }
+
+  /* Style the thumb (slider handle) */
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    border: 1px solid blue;
+    cursor: pointer;
+  }
+
+  /* Style the thumb (slider handle) when hovering */
+  input[type="range"]::-webkit-slider-thumb:hover {
+    background: #f0f0f0;
+  }
+</style>
+</head>
+<body onload="getData()">
+  <h1>JSON Server Data</h1>
+  <label for="offsetSlider">Offset Value:</label>
+  <input type="range" id="offsetSlider" min="2" max="3" step="0.1" value="2.5" style="--value: 2.5;">
+  <span id="offsetValue">2.5</span>
+  <br>
+  <label for="connectionInput">Connection:</label>
+  <input type="checkbox" id="connectionInput">
+  <br>
+  <div id="output"></div>
+  <br>
+  <img id="graphImage" src="graph.png" alt="Graph" width="600" height="300">
+
+  <script>
+    const offsetSlider = document.getElementById('offsetSlider');
+    const offsetValue = document.getElementById('offsetValue');
+    const connectionInput = document.getElementById('connectionInput');
+    const outputDiv = document.getElementById('output');
+    const graphImage = document.getElementById('graphImage');
+
+    offsetSlider.oninput = function() {
+      offsetValue.textContent = this.value;
+      this.style.setProperty('--value', this.value);
+    };
+
+    async function getData() {
+      const offset = offsetSlider.value;
+      const connection = connectionInput.checked ? '1' : '0';
+      const url = `http://127.0.0.1:8001/WS/ws1-json?Connection=${connection}&Offset=${offset}`;
+      const response = await fetch(url);
+      const data = await response.json();
+
+      // Round DC to 3 decimals
+      const roundedDC = data.DC.toFixed(3);
+
+      outputDiv.innerHTML = `
+        <h2>Output Data:</h2>
+        <p>DC: ${roundedDC}</p>
+        <p>Max: ${data.Max}</p>
+        <p>Min: ${data.Min}</p>
+      `;
+
+      // Update image source
+      const timestamp = new Date().getTime(); // Add timestamp to force image reload
+      graphImage.src = `graph.png?timestamp=${timestamp}`;
+
+      // Refresh data and image every second
+      setTimeout(getData, 1000);
+    }
+  </script>
+</body>
+</html>
